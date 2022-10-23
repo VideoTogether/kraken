@@ -9,9 +9,12 @@ port-min = 0
 port-max = 0
 
 [turn]
-host = "turn:turn.kraken.fm:443"
+hosts = [
+    "turn:turn.kraken.fm:443",
+    "turn:turn.kraken.fm:443"
+]
 # must be identical to coturn static auth secret
 secret = "812ecb0604d9b90c4aa43a0e3fd1ba85"
 
 [rpc]
-port = 7000
+port = 7002

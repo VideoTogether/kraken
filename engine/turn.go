@@ -22,16 +22,23 @@ func turn(conf *Configuration, uid string) ([]*NTS, error) {
 		return nil, err
 	}
 	credential := base64.StdEncoding.EncodeToString(mac.Sum(nil))
-	url := conf.Turn.Host
-	ownUDP := &NTS{
-		URLs:       url + "?transport=udp",
-		Username:   username,
-		Credential: credential,
+	var turns []*NTS
+
+	for _, url := range conf.Turn.Hosts {
+
+		ownUDP := &NTS{
+			URLs:       url + "?transport=udp",
+			Username:   username,
+			Credential: credential,
+		}
+		ownTCP := &NTS{
+			URLs:       url + "?transport=tcp",
+			Username:   username,
+			Credential: credential,
+		}
+		turns = append(turns, ownTCP)
+		turns = append(turns, ownUDP)
 	}
-	ownTCP := &NTS{
-		URLs:       url + "?transport=tcp",
-		Username:   username,
-		Credential: credential,
-	}
-	return []*NTS{ownUDP, ownTCP}, nil
+
+	return turns, nil
 }

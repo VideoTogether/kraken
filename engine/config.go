@@ -16,8 +16,8 @@ type Configuration struct {
 		PortMax   uint16 `toml:"port-max"`
 	} `toml:"engine"`
 	Turn struct {
-		Host   string `toml:"host"`
-		Secret string `toml:"secret"`
+		Hosts  []string `toml:"hosts"`
+		Secret string   `toml:"secret"`
 	} `toml:"turn"`
 	RPC struct {
 		Port int `toml:"port"`
