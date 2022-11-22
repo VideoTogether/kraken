@@ -72,6 +72,13 @@ func (impl *R) handle(w http.ResponseWriter, r *http.Request, _ map[string]strin
 	renderer := NewRender(w, call.Id)
 	logger.Printf("RPC.handle(id: %s, method: %s, params: %v)\n", call.Id, call.Method, call.Params)
 	switch call.Method {
+	case "statistics":
+		statistics, err := impl.statistics(call.Params)
+		if err != nil {
+			renderer.RenderError(err)
+		} else {
+			renderer.RenderData(statistics)
+		}
 	case "turn":
 		servers, err := impl.turn(call.Params)
 		if err != nil {
@@ -141,6 +148,10 @@ func (impl *R) handle(w http.ResponseWriter, r *http.Request, _ map[string]strin
 	default:
 		renderer.RenderError(fmt.Errorf("invalid method %s", call.Method))
 	}
+}
+
+func (r *R) statistics(params []interface{}) (interface{}, error) {
+	return statistics(r)
 }
 
 func (r *R) turn(params []interface{}) (interface{}, error) {
