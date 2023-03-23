@@ -21,9 +21,9 @@ type R struct {
 }
 
 type Call struct {
-	Id     string        `json:"id"`
-	Method string        `json:"method"`
-	Params []interface{} `json:"params"`
+	Id     string `json:"id"`
+	Method string `json:"method"`
+	Params []any  `json:"params"`
 }
 
 type Render struct {
@@ -43,8 +43,8 @@ func NewRender(w http.ResponseWriter, id string) *Render {
 	return r
 }
 
-func (r *Render) RenderData(data interface{}) {
-	body := map[string]interface{}{"data": data}
+func (r *Render) RenderData(data any) {
+	body := map[string]any{"data": data}
 	if r.id != "" {
 		body["id"] = r.id
 	}
@@ -53,7 +53,7 @@ func (r *Render) RenderData(data interface{}) {
 }
 
 func (r *Render) RenderError(err error) {
-	body := map[string]interface{}{"error": err}
+	body := map[string]any{"error": err}
 	if r.id != "" {
 		body["id"] = r.id
 	}
@@ -66,7 +66,7 @@ func (impl *R) handle(w http.ResponseWriter, r *http.Request, _ map[string]strin
 	d := json.NewDecoder(r.Body)
 	d.UseNumber()
 	if err := d.Decode(&call); err != nil {
-		render.New().JSON(w, http.StatusBadRequest, map[string]interface{}{"error": err.Error()})
+		render.New().JSON(w, http.StatusBadRequest, map[string]any{"error": err.Error()})
 		return
 	}
 	renderer := NewRender(w, call.Id)
@@ -98,7 +98,7 @@ func (impl *R) handle(w http.ResponseWriter, r *http.Request, _ map[string]strin
 		if err != nil {
 			renderer.RenderError(err)
 		} else {
-			renderer.RenderData(map[string]interface{}{"peers": peers})
+			renderer.RenderData(map[string]any{"peers": peers})
 		}
 	case "publish":
 		cid, answer, err := impl.publish(call.Params)
@@ -106,7 +106,7 @@ func (impl *R) handle(w http.ResponseWriter, r *http.Request, _ map[string]strin
 			renderer.RenderError(err)
 		} else {
 			jsep, _ := json.Marshal(answer)
-			renderer.RenderData(map[string]interface{}{"track": cid, "sdp": answer, "jsep": string(jsep)})
+			renderer.RenderData(map[string]any{"track": cid, "sdp": answer, "jsep": string(jsep)})
 		}
 	case "restart":
 		answer, err := impl.restart(call.Params)
@@ -114,7 +114,7 @@ func (impl *R) handle(w http.ResponseWriter, r *http.Request, _ map[string]strin
 			renderer.RenderError(err)
 		} else {
 			jsep, _ := json.Marshal(answer)
-			renderer.RenderData(map[string]interface{}{"jsep": string(jsep)})
+			renderer.RenderData(map[string]any{"jsep": string(jsep)})
 		}
 	case "end":
 		err := impl.end(call.Params)
@@ -136,7 +136,7 @@ func (impl *R) handle(w http.ResponseWriter, r *http.Request, _ map[string]strin
 			renderer.RenderError(err)
 		} else {
 			jsep, _ := json.Marshal(offer)
-			renderer.RenderData(map[string]interface{}{"type": offer.Type, "sdp": offer.SDP, "jsep": string(jsep)})
+			renderer.RenderData(map[string]any{"type": offer.Type, "sdp": offer.SDP, "jsep": string(jsep)})
 		}
 	case "answer":
 		err := impl.answer(call.Params)
@@ -150,11 +150,11 @@ func (impl *R) handle(w http.ResponseWriter, r *http.Request, _ map[string]strin
 	}
 }
 
-func (r *R) statistics(params []interface{}) (interface{}, error) {
+func (r *R) statistics(params []any) (any, error) {
 	return statistics(r)
 }
 
-func (r *R) turn(params []interface{}) (interface{}, error) {
+func (r *R) turn(params []any) (any, error) {
 	if len(params) != 1 {
 		return nil, buildError(ErrorInvalidParams, fmt.Errorf("invalid params count %d", len(params)))
 	}
@@ -165,14 +165,14 @@ func (r *R) turn(params []interface{}) (interface{}, error) {
 	return turn(r.conf, uid)
 }
 
-func (r *R) info(params []interface{}) (interface{}, error) {
+func (r *R) info(params []any) (any, error) {
 	if len(params) != 0 {
 		return nil, buildError(ErrorInvalidParams, fmt.Errorf("invalid params count %d", len(params)))
 	}
 	return r.router.info()
 }
 
-func (r *R) list(params []interface{}) ([]map[string]interface{}, error) {
+func (r *R) list(params []any) ([]map[string]any, error) {
 	if len(params) != 1 {
 		return nil, buildError(ErrorInvalidParams, fmt.Errorf("invalid params count %d", len(params)))
 	}
@@ -183,7 +183,7 @@ func (r *R) list(params []interface{}) ([]map[string]interface{}, error) {
 	return r.router.list(rid)
 }
 
-func (r *R) publish(params []interface{}) (string, *webrtc.SessionDescription, error) {
+func (r *R) publish(params []any) (string, *webrtc.SessionDescription, error) {
 	if len(params) < 3 {
 		return "", nil, buildError(ErrorInvalidParams, fmt.Errorf("invalid params count %d", len(params)))
 	}
@@ -219,7 +219,7 @@ func (r *R) publish(params []interface{}) (string, *webrtc.SessionDescription, e
 	return r.router.publish(rid, uid, sdp, limit, callback)
 }
 
-func (r *R) restart(params []interface{}) (*webrtc.SessionDescription, error) {
+func (r *R) restart(params []any) (*webrtc.SessionDescription, error) {
 	if len(params) != 4 {
 		return nil, buildError(ErrorInvalidParams, fmt.Errorf("invalid params count %d", len(params)))
 	}
@@ -234,7 +234,7 @@ func (r *R) restart(params []interface{}) (*webrtc.SessionDescription, error) {
 	return r.router.restart(ids[0], ids[1], ids[2], jsep)
 }
 
-func (r *R) end(params []interface{}) error {
+func (r *R) end(params []any) error {
 	if len(params) != 3 {
 		return buildError(ErrorInvalidParams, fmt.Errorf("invalid params count %d", len(params)))
 	}
@@ -245,7 +245,7 @@ func (r *R) end(params []interface{}) error {
 	return r.router.end(ids[0], ids[1], ids[2])
 }
 
-func (r *R) trickle(params []interface{}) error {
+func (r *R) trickle(params []any) error {
 	if len(params) != 4 {
 		return buildError(ErrorInvalidParams, fmt.Errorf("invalid params count %d", len(params)))
 	}
@@ -260,7 +260,7 @@ func (r *R) trickle(params []interface{}) error {
 	return r.router.trickle(ids[0], ids[1], ids[2], candi)
 }
 
-func (r *R) subscribe(params []interface{}) (*webrtc.SessionDescription, error) {
+func (r *R) subscribe(params []any) (*webrtc.SessionDescription, error) {
 	if len(params) != 3 {
 		return nil, buildError(ErrorInvalidParams, fmt.Errorf("invalid params count %d", len(params)))
 	}
@@ -271,7 +271,7 @@ func (r *R) subscribe(params []interface{}) (*webrtc.SessionDescription, error) 
 	return r.router.subscribe(ids[0], ids[1], ids[2])
 }
 
-func (r *R) answer(params []interface{}) error {
+func (r *R) answer(params []any) error {
 	if len(params) != 4 {
 		return buildError(ErrorInvalidParams, fmt.Errorf("invalid params count %d", len(params)))
 	}
@@ -286,7 +286,7 @@ func (r *R) answer(params []interface{}) error {
 	return r.router.answer(ids[0], ids[1], ids[2], sdp)
 }
 
-func (r *R) parseId(params []interface{}) ([]string, error) {
+func (r *R) parseId(params []any) ([]string, error) {
 	rid, ok := params[0].(string)
 	if !ok {
 		return nil, fmt.Errorf("invalid rid type %s", params[0])
@@ -304,14 +304,14 @@ func (r *R) parseId(params []interface{}) ([]string, error) {
 
 func registerHandlers(router *httptreemux.TreeMux) {
 	router.MethodNotAllowedHandler = func(w http.ResponseWriter, r *http.Request, _ map[string]httptreemux.HandlerFunc) {
-		render.New().JSON(w, http.StatusNotFound, map[string]interface{}{"error": "not found"})
+		render.New().JSON(w, http.StatusNotFound, map[string]any{"error": "not found"})
 	}
 	router.NotFoundHandler = func(w http.ResponseWriter, r *http.Request) {
-		render.New().JSON(w, http.StatusNotFound, map[string]interface{}{"error": "not found"})
+		render.New().JSON(w, http.StatusNotFound, map[string]any{"error": "not found"})
 	}
-	router.PanicHandler = func(w http.ResponseWriter, r *http.Request, rcv interface{}) {
+	router.PanicHandler = func(w http.ResponseWriter, r *http.Request, rcv any) {
 		logger.Println(rcv)
-		render.New().JSON(w, http.StatusInternalServerError, map[string]interface{}{"error": "server error"})
+		render.New().JSON(w, http.StatusInternalServerError, map[string]any{"error": "server error"})
 	}
 }
 
@@ -327,7 +327,7 @@ func handleCORS(handler http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Methods", "OPTIONS,GET,POST,DELETE")
 		w.Header().Set("Access-Control-Max-Age", "600")
 		if r.Method == "OPTIONS" {
-			render.New().JSON(w, http.StatusOK, map[string]interface{}{})
+			render.New().JSON(w, http.StatusOK, map[string]any{})
 		} else {
 			handler.ServeHTTP(w, r)
 		}
