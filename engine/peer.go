@@ -107,6 +107,11 @@ func (peer *Peer) handle() {
 		logger.Printf("HandlePeer(%s) OnICEConnectionStateChange(%s)\n", peer.id(), state)
 	})
 	peer.pc.OnTrack(func(rt *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
+		if peer.cid == peerTrackClosedId {
+			logger.Printf("HandlePeer(%s) OnTrack(%d, %d) closed\n", peer.id(), rt.PayloadType(), rt.SSRC())
+			return
+		}
+
 		logger.Printf("HandlePeer(%s) OnTrack(%d, %d)\n", peer.id(), rt.PayloadType(), rt.SSRC())
 		if peer.track != nil || (111 != rt.PayloadType() && 109 != rt.PayloadType()) {
 			return
