@@ -161,13 +161,13 @@ func (peer *Peer) callbackOnTrack() error {
 }
 
 func (peer *Peer) copyTrack(src *webrtc.TrackRemote, dst *webrtc.TrackLocalStaticRTP) error {
-	defer func() {
-		if e := recover(); e != nil {
-			logger.Printf("copyTrack(%s) panic %v\n", peer.id(), e)
-		}
-	}()
-
 	go func() error {
+		defer func() {
+			if e := recover(); e != nil {
+				logger.Printf("copyTrack(%s) panic %v\n", peer.id(), e)
+			}
+		}()
+
 		defer close(peer.queue)
 
 		for {
